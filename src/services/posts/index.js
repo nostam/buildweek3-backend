@@ -27,7 +27,7 @@ PostsRouter.route("/")
       const payload = {
         ...req.body,
         user: user[0],
-        image: req.body.image ? req.body.image : "https://picsum.photos/x400",
+        image: req.body.image ? req.body.image : "https://picsum.photos/400",
       };
       const newPost = await PostsModel(payload);
       const { _id } = await newPost.save();
@@ -40,9 +40,8 @@ PostsRouter.route("/")
 PostsRouter.route("/:postId")
   .get(async (req, res, next) => {
     try {
-      const payload = await PostsModel.findById(req.params.postId).populate(
-        "user"
-      );
+      const payload = await PostsModel.findById(req.params.postId)
+        .populate(["comments", "user"]);
       res.send(payload);
     } catch (error) {
       next(error);
