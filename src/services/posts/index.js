@@ -9,6 +9,7 @@ const {
   uploadCloudinary,
   uploadCloudinaryWithLimit,
 } = require("../../utils/cloudinary");
+
 PostsRouter.route("/")
   .get(async (req, res, next) => {
     try {
@@ -69,10 +70,11 @@ PostsRouter.route("/:postId")
       next(error);
     }
   })
-  .post(uploadCloudinary.single("image"), async (req, res, next) => {
+  .post(uploadCloudinary.single("post"), async (req, res, next) => {
     let imageUrl;
     if (req.file && req.file.path) imageUrl = req.file.path;
     try {
+      console.log(req.body, req.file);
       const { _doc } = await PostsModel.findById(req.params.postId);
       const payload = { ..._doc, image: imageUrl };
       const _id = await PostsModel.updatePostByPostId(
@@ -85,17 +87,18 @@ PostsRouter.route("/:postId")
     }
   });
 
+
 PostsRouter.post("/:postId/:userId/like", async (req, res, next) => {
   try {
-    const profile = await ProfilesModel.findById(req.params.userId);
     const modifiedPost = await PostsModel.findByIdAndUpdate(
       req.params.postId,
       {
         $push: {
           likes: [
             {
-              name: profile.name,
-              surname: profile.surname,
+              _id: req.params.userId,
+              name: req.body.name,
+              surname: req.body.surname
             },
           ],
         },

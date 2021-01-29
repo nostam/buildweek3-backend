@@ -5,8 +5,9 @@ const { uploadCloudinary } = require("../../utils/cloudinary");
 const ExperienceSchema = require("../../model/experiences");
 const ProfileSchema = require("../../model/profiles");
 const { APIError } = require("../../utils");
+const { validationResult } = require("express-validator");
 /// First one is done
-app.get("/profile/:userName/experiences", async (req, res, next) => {
+app.get("/:userName", async (req, res, next) => {
   try {
     const profile = await ProfileSchema.findOne({
       username: req.params.userName,
@@ -23,7 +24,7 @@ app.get("/profile/:userName/experiences", async (req, res, next) => {
   }
 });
 
-app.post("/profile/:username/experiences/CSV", async (req, res, next) => {
+app.post("/:username/experiences/CSV", async (req, res, next) => {
   try {
     const profile = await ProfileSchema.findOne({
       username: req.params.username,
@@ -43,7 +44,7 @@ app.post("/profile/:username/experiences/CSV", async (req, res, next) => {
     next(error);
   }
 });
-app.post("/profile/:username/experiences", validateExperience, async (req, res, next) => {
+app.post("/:username", validateExperience, async (req, res, next) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) throw new APIError(errors.array(), 404);
@@ -69,7 +70,7 @@ app.post("/profile/:username/experiences", validateExperience, async (req, res, 
 });
 
 app.post(
-  "/profile/:userName/experiences/:expId/upload",
+  "/:userName/experiences/:expId/upload",
   uploadCloudinary.single("image"),
   async (req, res, next) => {
     try {
@@ -96,11 +97,11 @@ app.post(
   }
 );
 /// second one is done
-app.get("/profile/:userName/experiences/:expId", async (req, res, next) => {
+app.get("/:userName/experiences/:expId", async (req, res, next) => {
   try {
-    await ProfileSchema.findOne({
-      username: req.params.userName,
-    });
+    // await ProfileSchema.findOne({
+    //   username: req.params.userName,
+    // });
     const experince = await ExperienceSchema.findById(req.params.expId);
     console.log(experince);
     res.send(experince);
@@ -110,22 +111,26 @@ app.get("/profile/:userName/experiences/:expId", async (req, res, next) => {
   }
 });
 /// put is done
-app.put("/profile/:userName/experiences/:expId", async (req, res, next) => {
+app.put("/:userName/experiences/:expId", async (req, res, next) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) throw new APIError(errors.array(), 404);
-    const modifed = await ExperienceSchema.findByIdAndUpdate(req.params.expId, {
-      ...req.body,
-    });
-    console.log(modifed);
-    res.send(modifed);
+    const modified = await ExperienceSchema.findByIdAndUpdate(
+      req.params.expId,
+      {
+        ...req.body,
+      }
+    );
+    console.log(modified);
+    if (!isNaN(modified)) throw new APIError("modified fail", 500);
+    res.send(modified);
   } catch (err) {
     console.log("\x1b[31m", err);
     next(err);
   }
 });
 
-app.delete("/profile/:userName/experiences/:expId", async (req, res, next) => {
+app.delete("/:userName/experiences/:expId", async (req, res, next) => {
   try {
     const deleteExperice = await ExperienceSchema.findByIdAndDelete(
       req.params.expId

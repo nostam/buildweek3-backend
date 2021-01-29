@@ -15,6 +15,17 @@ const senderEmail = "Mailgun Sandbox" + process.env.MG_EMAIL;
 
 const ProfileSchema = require("../../model/profiles");
 
+app.get("/rng", async (req, res, next) => {
+  try {
+    const profile = await ProfileSchema.find();
+    const profileNum = Math.floor(Math.random() * profile.length);
+    res.send(profile[profileNum]);
+  } catch (err) {
+    console.log("\x1b[31m", err);
+    next(err);
+  }
+});
+
 app.get("/me", auth.checkToken, (req, res) => {
   res.send(req.user);
 });
@@ -24,13 +35,25 @@ app
   .route("/")
   .post(async (req, res, next) => {
     try {
-      const profile = await new ProfileSchema(req.body).save();
-      req.user = profile;
-      next();
+      const username = await ProfileSchema.findOne({ username: req.body.username });
+      const email = await ProfileSchema.findOne({ email: req.body.email });
+
+      if (username) {
+        res.send("User already exists!")
+        next()
+      } else if (email) {
+        res.send("Email already exists!")
+        next()
+      } else {
+        const profile = await new ProfileSchema(req.body).save();
+        req.user = profile;
+        next();
+      }
     } catch (err) {
       next(err);
     }
   }, auth.generateToken)
+
   .get(async (req, res, next) => {
     try {
       const regex = new RegExp(req.query.name, "ig");
